@@ -3,16 +3,27 @@ import {
   SearchIssuesResponse,
   SearchIssuesError,
   UseApiQueryHook,
+  SearchIssuesQueryRpcName,
 } from "../api";
-import { createUseApiQuery, fetchWithError } from "../api_helpers";
+import {
+  // createUseApiQuery,
+  fetchWithError,
+  useApiQuery,
+} from "../api_helpers";
 
-export const useSearchIssuesQuery: UseApiQueryHook<
-  "search/issues",
-  SearchIssuesArgs,
-  SearchIssuesResponse,
-  SearchIssuesError
-> = createUseApiQuery("search/issues", ({ queryKey: [, args], signal }) => {
-  const url = new URL("/api/search/issues", window.location.origin);
-  url.searchParams.append("q", args.searchTerm);
-  return fetchWithError(url.toString(), { signal });
-});
+export const SEARCH_ISSUES_QUERY_RPC_NAME = "search/issues";
+
+export const useSearchIssuesQuery: UseApiQueryHook<SearchIssuesQueryRpcName> = ( //createUseApiQuery(
+  args,
+  options
+) =>
+  useApiQuery(
+    SEARCH_ISSUES_QUERY_RPC_NAME,
+    args,
+    ({ signal }) => {
+      const url = new URL("/api/search/issues", window.location.origin);
+      url.searchParams.append("q", args.searchTerm);
+      return fetchWithError(url.toString(), { signal });
+    },
+    options
+  );

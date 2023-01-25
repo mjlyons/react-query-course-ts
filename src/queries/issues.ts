@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
   GetIssuesArgs,
   GetIssuesResponse,
@@ -5,16 +6,22 @@ import {
   UseApiQueryHook,
 } from "../api";
 import {
-  createUseApiQuery,
+  // createUseApiQuery,
   fetchWithError,
   GET_ISSUES_RPC_NAME,
+  useApiQuery,
 } from "../api_helpers";
 import { precacheGetIssueQuery } from "./issue";
 
-export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> =
-  createUseApiQuery(
+export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> = (
+  args,
+  options
+) => {
+  const queryClient = useQueryClient();
+
+  return useApiQuery(
     GET_ISSUES_RPC_NAME,
-    // ({ queryClient }) =>
+    args,
     ({ queryKey: [, args], signal }) => {
       const url = new URL("/api/issues", window.location.origin);
       for (const label of args.labelsFilter ?? []) {
@@ -33,9 +40,10 @@ export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> =
         items: resJson,
       }));
     },
-    {},
     {
-      normalizer: (data, queryClient) => {
+      ...options,
+      onSuccess: (data) => {
+        options.onSuccess?.(data);
         for (const issue of data.items) {
           precacheGetIssueQuery(
             queryClient,
@@ -46,3 +54,4 @@ export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> =
       },
     }
   );
+};

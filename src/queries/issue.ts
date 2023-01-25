@@ -3,35 +3,44 @@ import {
   ApiQueryFunction,
   GetIssueArgs,
   GetIssueResponse,
-  GetIssueRpcName,
+  GetIssueQueryRpcName,
   GetIssuesError,
   UseApiQueryHook,
 } from "../api";
-import { createUseApiQuery, fetchWithError, getCacheKey } from "../api_helpers";
+import {
+  //   createUseApiQuery,
+  fetchWithError,
+  getQueryKey,
+  useApiQuery,
+} from "../api_helpers";
 
-export const GET_ISSUE_RPC_NAME: GetIssueRpcName = "issue";
+export const GET_ISSUE_RPC_NAME: GetIssueQueryRpcName = "issue";
 
-const queryFn: ApiQueryFunction<GetIssueRpcName> = ({
+const queryFn: ApiQueryFunction<GetIssueQueryRpcName> = ({
   queryKey: [, args],
   signal,
 }) => {
   return fetchWithError(`/api/issues/${args.issueNumber}`, { signal });
 };
 
-export const useGetIssueQuery: UseApiQueryHook<GetIssueRpcName> =
-  createUseApiQuery("issue", queryFn);
+// export const useGetIssueQuery: UseApiQueryHook<GetIssueQueryRpcName> =
+//   createUseApiQuery("issue", queryFn);
+export const useGetIssueQuery: UseApiQueryHook<GetIssueQueryRpcName> = (
+  args,
+  options
+) => useApiQuery(GET_ISSUE_RPC_NAME, args, queryFn, options);
 
 export const precacheGetIssueQuery = (
   queryClient: QueryClient,
   args: GetIssueArgs,
   data: GetIssueResponse
 ) => {
-  queryClient.setQueryData(getCacheKey(GET_ISSUE_RPC_NAME)(args), data);
+  queryClient.setQueryData(getQueryKey(GET_ISSUE_RPC_NAME)(args), data);
 };
 
 export const prefetchGetIssueQuery = (
   queryClient: QueryClient,
   args: GetIssueArgs
 ) => {
-  queryClient.prefetchQuery(getCacheKey(GET_ISSUE_RPC_NAME)(args), queryFn);
+  queryClient.prefetchQuery(getQueryKey(GET_ISSUE_RPC_NAME)(args), queryFn);
 };

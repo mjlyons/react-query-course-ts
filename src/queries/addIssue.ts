@@ -5,23 +5,27 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
-  AddIssueArgs,
-  AddIssueError,
-  AddIssueResponse,
+  AddIssueMutationRpcName,
   GetIssueResponse,
-  GetIssuesResponse,
+  UseApiMutationHook,
 } from "../api";
 import {
-  getCacheKey,
-  getCacheKeyRpcFilter,
-  GET_ISSUES_RPC_NAME,
+  getQueryKey,
+  getQueryKeyRpcFilter,
+  useApiMutation,
 } from "../api_helpers";
 import { GET_ISSUE_RPC_NAME } from "./issue";
 
-export const useAddIssueMutation = () => {
+export const ADD_ISSUE_MUTATION_RPC_NAME: AddIssueMutationRpcName = "issue";
+
+export const useAddIssueMutation: UseApiMutationHook<
+  AddIssueMutationRpcName
+> = (options = {}) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  return useMutation<AddIssueResponse, AddIssueError, AddIssueArgs>(
+
+  return useApiMutation<AddIssueMutationRpcName>(
+    ADD_ISSUE_MUTATION_RPC_NAME,
     (issueBody) => {
       return fetch("/api/issues", {
         method: "POST",
@@ -30,14 +34,15 @@ export const useAddIssueMutation = () => {
       }).then((res) => res.json());
     },
     {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries(getCacheKeyRpcFilter("issues"));
+      ...options,
+      onSuccess: (data, variables, context) => {
+        options.onSuccess?.(data, variables, context);
+        queryClient.invalidateQueries(getQueryKeyRpcFilter("issues"));
         queryClient.setQueryData<GetIssueResponse>(
-          getCacheKey(GET_ISSUE_RPC_NAME)({ issueNumber: data.number }),
+          getQueryKey(GET_ISSUE_RPC_NAME)({ issueNumber: data.number }),
           data
         );
         navigate(`/issue/${data.number}`);
-        //navigate(`/`);
       },
     }
   );
