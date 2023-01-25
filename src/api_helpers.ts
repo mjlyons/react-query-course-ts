@@ -25,7 +25,6 @@ import {
 
 export const useApiQuery = <
   QueryRpcNameT extends QueryRpcName,
-  ArgsT extends ApiArgs = QueryRpcNameToTypes[QueryRpcNameT]["args"],
   ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"],
   ErrorT = QueryRpcNameToTypes[QueryRpcNameT]["error"]
 >(

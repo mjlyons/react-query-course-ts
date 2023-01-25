@@ -39,7 +39,7 @@ export const useAddIssueMutation: UseApiMutationHook<
         options.onSuccess?.(data, variables, context);
         queryClient.invalidateQueries(getQueryKeyRpcFilter("issues"));
         queryClient.setQueryData<GetIssueResponse>(
-          getQueryKey(GET_ISSUE_RPC_NAME)({ issueNumber: data.number }),
+          [GET_ISSUE_RPC_NAME, { issueNumber: data.number }],
           data
         );
         navigate(`/issue/${data.number}`);

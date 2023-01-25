@@ -11,7 +11,7 @@ import {
   GET_ISSUES_RPC_NAME,
   useApiQuery,
 } from "../api_helpers";
-import { precacheGetIssueQuery } from "./issue";
+import { GET_ISSUE_RPC_NAME } from "./issue";
 
 export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> = (
   args,
@@ -44,9 +44,8 @@ export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> = (
       onSuccess: (data) => {
         options.onSuccess?.(data);
         for (const issue of data.items) {
-          precacheGetIssueQuery(
-            queryClient,
-            { issueNumber: issue.number },
+          queryClient.setQueryData(
+            [GET_ISSUE_RPC_NAME, { issueNumber: issue.number }],
             issue
           );
         }
