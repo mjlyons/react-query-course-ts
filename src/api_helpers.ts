@@ -59,46 +59,7 @@ export const useApiMutation = <
     mutationFn,
     options
   );
-
-// export const createUseApiQuery = <QueryRpcNameT extends QueryRpcName>(
-//   QueryRpcName: QueryRpcNameT,
-//   rpcFn: ApiQueryFunction<QueryRpcNameT>,
-//   defaultOptions?: ApiQueryOptions<QueryRpcNameT>,
-//   extensions: QueryExtensions<QueryRpcNameT> = {}
-// ): UseApiQueryHook<QueryRpcNameT> => {
-//   return (args, options) => {
-//     const queryClient = useQueryClient();
-//     const wrappedRpcFn: typeof rpcFn = useCallback(
-//       async (...args) => {
-//         const data = await rpcFn(...args);
-//         extensions.normalizer?.(data, queryClient);
-//         return data;
-//       },
-//       [queryClient, extensions?.normalizer, rpcFn]
-//     );
-//     return useApiQuery<QueryRpcNameT>([QueryRpcName, args], wrappedRpcFn, {
-//       ...defaultOptions,
-//       ...options,
-//     });
-//   };
-// };
-
-// export const createUseApiMutation = <MutationRpcNameT extends MutationRpcName>(
-//   MutationRpcName: MutationRpcNameT,
-//   rpcFn: ApiMutationFunction<MutationRpcNameT>,
-//   defaultOptions?: ApiMutationOptions<MutationRpcNameT>,
-//   extensions: MutationExtensions<MutationRpcNameT> = {}
-// ): UseApiMutationHook<MutationRpcNameT> => {
-//   return (args, options) => {
-//     // const queryClient = useQueryClient();
-//     return useApiMutation<MutationRpcNameT>([MutationRpcName, args], rpcFn, {
-//       ...defaultOptions,
-//       ...options,
-//     });
-//   };
-// };
-
-export const getQueryKey =
+export const getQueryKeyFn =
   <
     QueryRpcNameT extends QueryRpcName,
     ArgsT extends ApiArgs = QueryRpcNameToTypes[QueryRpcNameT]["args"]
@@ -121,22 +82,21 @@ export const getMutationKey = <MutationRpcNameT extends MutationRpcName>(
   return [mutationRpcName];
 };
 
-export const GET_ISSUES_RPC_NAME = "issues";
-export const precache = <
-  QueryRpcNameT extends QueryRpcName,
-  ArgsT extends ApiArgs,
-  ResponseT
->(
-  queryClient: QueryClient,
-  QueryRpcName: QueryRpcNameT,
-  args: ArgsT,
-  data: ResponseT
-) => {
-  queryClient.setQueryData(
-    getQueryKey<QueryRpcNameT, ArgsT>(QueryRpcName)(args),
-    data
-  );
-};
+// export const precache = <
+//   QueryRpcNameT extends QueryRpcName,
+//   ArgsT extends ApiArgs,
+//   ResponseT
+// >(
+//   queryClient: QueryClient,
+//   QueryRpcName: QueryRpcNameT,
+//   args: ArgsT,
+//   data: ResponseT
+// ) => {
+//   queryClient.setQueryData(
+//     getQueryKeyFn<QueryRpcNameT, ArgsT>(QueryRpcName)(args),
+//     data
+//   );
+// };
 
 export function isValid<T>(x: T | undefined | null): x is T {
   return x !== undefined && x !== null;

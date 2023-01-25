@@ -4,23 +4,21 @@ import {
   GetIssuesResponse,
   GetIssuesError,
   UseApiQueryHook,
+  GetIssuesQueryRpcName,
 } from "../api";
-import {
-  // createUseApiQuery,
-  fetchWithError,
-  GET_ISSUES_RPC_NAME,
-  useApiQuery,
-} from "../api_helpers";
+import { fetchWithError, getQueryKeyFn, useApiQuery } from "../api_helpers";
 import { GET_ISSUE_RPC_NAME } from "./issue";
 
-export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> = (
-  args,
-  options
-) => {
+const GET_ISSUES_QUERY_RPC_NAME: GetIssuesQueryRpcName = "issues";
+export const getIssuesQueryKey = getQueryKeyFn(GET_ISSUES_QUERY_RPC_NAME);
+
+export const useGetIssuesQuery: UseApiQueryHook<
+  typeof GET_ISSUES_QUERY_RPC_NAME
+> = (args, options) => {
   const queryClient = useQueryClient();
 
   return useApiQuery(
-    [GET_ISSUES_RPC_NAME, args],
+    getIssuesQueryKey(args),
     ({ signal }) => {
       const url = new URL("/api/issues", window.location.origin);
       for (const label of args.labelsFilter ?? []) {

@@ -9,11 +9,7 @@ import {
   GetIssueResponse,
   UseApiMutationHook,
 } from "../api";
-import {
-  getQueryKey,
-  getQueryKeyRpcFilter,
-  useApiMutation,
-} from "../api_helpers";
+import { getQueryKeyRpcFilter, useApiMutation } from "../api_helpers";
 import { GET_ISSUE_RPC_NAME } from "./issue";
 
 export const ADD_ISSUE_MUTATION_RPC_NAME: AddIssueMutationRpcName = "issue";

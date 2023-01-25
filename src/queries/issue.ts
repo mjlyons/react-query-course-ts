@@ -7,9 +7,11 @@ import {
   GetIssuesError,
   UseApiQueryHook,
 } from "../api";
-import { fetchWithError, getQueryKey, useApiQuery } from "../api_helpers";
+import { fetchWithError, getQueryKeyFn, useApiQuery } from "../api_helpers";
 
 export const GET_ISSUE_RPC_NAME: GetIssueQueryRpcName = "issue";
+
+export const getIssueQueryKey = getQueryKeyFn("issue");
 
 const queryFn: ApiQueryFunction<GetIssueQueryRpcName> = ({
   queryKey: [, args],
@@ -21,11 +23,11 @@ const queryFn: ApiQueryFunction<GetIssueQueryRpcName> = ({
 export const useGetIssueQuery: UseApiQueryHook<GetIssueQueryRpcName> = (
   args,
   options
-) => useApiQuery([GET_ISSUE_RPC_NAME, args], queryFn, options);
+) => useApiQuery(getIssueQueryKey(args), queryFn, options);
 
 export const prefetchGetIssueQuery = (
   queryClient: QueryClient,
   args: GetIssueArgs
 ) => {
-  queryClient.prefetchQuery(getQueryKey(GET_ISSUE_RPC_NAME)(args), queryFn);
+  queryClient.prefetchQuery(getIssueQueryKey(args), queryFn);
 };
