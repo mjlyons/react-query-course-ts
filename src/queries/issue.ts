@@ -28,7 +28,7 @@ const queryFn: ApiQueryFunction<GetIssueQueryRpcName> = ({
 export const useGetIssueQuery: UseApiQueryHook<GetIssueQueryRpcName> = (
   args,
   options
-) => useApiQuery(GET_ISSUE_RPC_NAME, args, queryFn, options);
+) => useApiQuery([GET_ISSUE_RPC_NAME, args], queryFn, options);
 
 export const precacheGetIssueQuery = (
   queryClient: QueryClient,

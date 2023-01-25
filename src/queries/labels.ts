@@ -22,8 +22,7 @@ export const useGetLabelsQuery: UseApiQueryHook<GetLabelsQueryRpcName> = (
 ) => {
   // createUseApiQuery(
   return useApiQuery(
-    GET_LABELS_CACHE_KEY,
-    args,
+    [GET_LABELS_CACHE_KEY, args],
     ({ signal }) => fetchWithError("/api/labels", { signal }),
     {
       staleTime: 60 * 60 * 1000 /* 1 hr */,

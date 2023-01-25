@@ -29,8 +29,7 @@ export const useApiQuery = <
   ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"],
   ErrorT = QueryRpcNameToTypes[QueryRpcNameT]["error"]
 >(
-  queryRpcName: QueryRpcNameT,
-  args: ArgsT,
+  queryKey: ApiQueryKey<QueryRpcNameT>,
   queryFn: Parameters<
     typeof useQuery<ResponseT, ErrorT, ResponseT, ApiQueryKey<QueryRpcNameT>>
   >[1],
@@ -41,7 +40,7 @@ export const useApiQuery = <
   typeof useQuery<ResponseT, ErrorT, ResponseT, ApiQueryKey<QueryRpcNameT>>
 > =>
   useQuery<ResponseT, ErrorT, ResponseT, ApiQueryKey<QueryRpcNameT>>(
-    getQueryKey<QueryRpcNameT>(queryRpcName)(args),
+    queryKey,
     queryFn,
     options
   );

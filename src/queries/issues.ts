@@ -20,9 +20,8 @@ export const useGetIssuesQuery: UseApiQueryHook<typeof GET_ISSUES_RPC_NAME> = (
   const queryClient = useQueryClient();
 
   return useApiQuery(
-    GET_ISSUES_RPC_NAME,
-    args,
-    ({ queryKey: [, args], signal }) => {
+    [GET_ISSUES_RPC_NAME, args],
+    ({ signal }) => {
       const url = new URL("/api/issues", window.location.origin);
       for (const label of args.labelsFilter ?? []) {
         // There seems to be a bug where the id "help wanted" is returned by the server as "help"

@@ -24,7 +24,7 @@ const queryFn: ApiQueryFunction<GetIssueCommentsQueryRpcName> = ({
 export const useGetIssueCommentsQuery: UseApiQueryHook<
   GetIssueCommentsQueryRpcName
 > = (args, options) => {
-  return useApiQuery(GET_ISSUE_COMMENTS_RPC_NAME, args, queryFn, options);
+  return useApiQuery([GET_ISSUE_COMMENTS_RPC_NAME, args], queryFn, options);
 };
 
 export const prefetchGetIssueCommentsQuery = (
