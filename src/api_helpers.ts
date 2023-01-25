@@ -8,19 +8,17 @@ import {
 import {
   ApiArgs,
   ApiQueryKey,
-  ApiQueryFunction,
-  UseApiQueryHook,
+  GetQueryKeyFn,
   IssueStatus,
-  ApiQueryOptions,
   QueryRpcName,
   QueryRpcNameToTypes,
   MutationRpcName,
   MutationRpcNameToTypes,
-  // QueryExtensions,
-  MutationExtensions,
-  ApiMutationFunction,
-  ApiMutationOptions,
-  UseApiMutationHook,
+  ApiQueryOptions,
+  ApiQueryHookPackage,
+  ApiQueryOptionsFn,
+  ApiQueryFunction,
+  ApiQueryArgs,
 } from "./api";
 
 export const useApiQuery = <
@@ -82,22 +80,6 @@ export const getMutationKey = <MutationRpcNameT extends MutationRpcName>(
   return [mutationRpcName];
 };
 
-// export const precache = <
-//   QueryRpcNameT extends QueryRpcName,
-//   ArgsT extends ApiArgs,
-//   ResponseT
-// >(
-//   queryClient: QueryClient,
-//   QueryRpcName: QueryRpcNameT,
-//   args: ArgsT,
-//   data: ResponseT
-// ) => {
-//   queryClient.setQueryData(
-//     getQueryKeyFn<QueryRpcNameT, ArgsT>(QueryRpcName)(args),
-//     data
-//   );
-// };
-
 export function isValid<T>(x: T | undefined | null): x is T {
   return x !== undefined && x !== null;
 }
@@ -130,4 +112,48 @@ export const fetchWithError = async <ResponseT>(
   }
 
   return result;
+};
+
+const fallbackOptionsFn = <QueryRpcNameT extends QueryRpcName>(
+  options: ApiQueryOptions<QueryRpcNameT>
+): ApiQueryOptions<QueryRpcNameT> => options;
+export const createApiQuery = <QueryRpcNameT extends QueryRpcName>({
+  queryRpcName,
+  queryFn,
+  getQueryKey,
+  optionsFn,
+}: {
+  queryRpcName: QueryRpcNameT;
+  queryFn: ApiQueryFunction<QueryRpcNameT>;
+  getQueryKey?: GetQueryKeyFn<QueryRpcNameT>;
+  optionsFn?: ApiQueryOptionsFn<QueryRpcNameT>;
+}): ApiQueryHookPackage<QueryRpcNameT> => {
+  const _getQueryKey = getQueryKey ?? getQueryKeyFn(queryRpcName);
+  const _optionsFn = optionsFn ?? fallbackOptionsFn;
+
+  const useRpcQuery = (
+    args: ApiQueryArgs<QueryRpcNameT>,
+    options?: ApiQueryOptions<QueryRpcNameT>
+  ) => {
+    const optionsWithDefaults = _optionsFn(options ?? {});
+    return useApiQuery(_getQueryKey(args), queryFn(args), optionsWithDefaults);
+  };
+
+  return {
+    queryRpcName,
+    getQueryKey: _getQueryKey,
+    queryFn,
+    useRpcQuery,
+    prefetch: (queryClient, args) => {
+      queryClient.prefetchQuery(_getQueryKey(args), queryFn(args));
+    },
+    setQueryData: (queryClient, args, data) => {
+      queryClient.setQueryData(_getQueryKey(args), data);
+    },
+    invalidateQueries: (queryClient, args) => {
+      queryClient.invalidateQueries(
+        !!args ? _getQueryKey(args) : getQueryKeyRpcFilter(queryRpcName)
+      );
+    },
+  };
 };

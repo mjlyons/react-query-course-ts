@@ -4,13 +4,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import {
-  AddIssueMutationRpcName,
-  GetIssueResponse,
-  UseApiMutationHook,
-} from "../api";
-import { getQueryKeyRpcFilter, useApiMutation } from "../api_helpers";
-import { GET_ISSUE_RPC_NAME } from "./issue";
+import { AddIssueMutationRpcName, UseApiMutationHook } from "../api";
+import { useApiMutation } from "../api_helpers";
+import { issueAccess } from "./issue";
+import { issuesAccess } from "./issues";
 
 export const ADD_ISSUE_MUTATION_RPC_NAME: AddIssueMutationRpcName = "issue";
 
@@ -33,9 +30,10 @@ export const useAddIssueMutation: UseApiMutationHook<
       ...options,
       onSuccess: (data, variables, context) => {
         options.onSuccess?.(data, variables, context);
-        queryClient.invalidateQueries(getQueryKeyRpcFilter("issues"));
-        queryClient.setQueryData<GetIssueResponse>(
-          [GET_ISSUE_RPC_NAME, { issueNumber: data.number }],
+        issuesAccess.invalidateQueries(queryClient);
+        issueAccess.setQueryData(
+          queryClient,
+          { issueNumber: data.number },
           data
         );
         navigate(`/issue/${data.number}`);

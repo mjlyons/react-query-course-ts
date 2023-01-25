@@ -1,20 +1,19 @@
 import * as React from "react";
-import { useGetIssuesQuery } from "../queries/issues";
-import { GoIssueOpened, GoIssueClosed, GoComment } from "react-icons/go";
+import { issuesAccess } from "../queries/issues";
+import { GoComment } from "react-icons/go";
 import { getIssueRoute } from "../App";
 import { Link } from "react-router-dom";
 import { relativeDate } from "../helpers/relativeDate";
-import { isStatusClosed } from "../api_helpers";
 import { Issue, IssueStatus, LabelId } from "../api";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { LabelList } from "./LabelList";
 import { UserAvatar } from "./UserAvatar";
 import { UserName } from "./UserName";
 import { IssueStatusIcon } from "./IssueStatusIcon";
-import { useSearchIssuesQuery } from "../queries/searchIssues";
-import { prefetchGetIssueQuery } from "../queries/issue";
 import { useQueryClient } from "@tanstack/react-query";
-import { prefetchGetIssueCommentsQuery } from "../queries/issueComments";
+import { searchIssuesAccess } from "../queries/searchIssues";
+import { issueAccess } from "../queries/issue";
+import { issueCommentsAccess } from "../queries/issueComments";
 
 export const IssuesList: React.FC<{
   searchTerm?: string | null;
@@ -24,9 +23,10 @@ export const IssuesList: React.FC<{
 }> = (props) => {
   const { searchTerm, labelsFilter, statusFilter, onClickLabel } = props;
 
+  // TODO: we should probably use both, but keep track of which one to disable/use
   const issuesQuery = !!searchTerm
-    ? useSearchIssuesQuery({ searchTerm }, {})
-    : useGetIssuesQuery({ labelsFilter, statusFilter }, {});
+    ? searchIssuesAccess.useRpcQuery({ searchTerm }, {})
+    : issuesAccess.useRpcQuery({ labelsFilter, statusFilter }, {});
 
   if (issuesQuery.isLoading) {
     return <LoadingIndicator />;
@@ -58,8 +58,8 @@ const IssueItem: React.FC<{
   const queryClient = useQueryClient();
 
   const handleMouseEnter = React.useCallback(() => {
-    prefetchGetIssueQuery(queryClient, { issueNumber: issue.number });
-    prefetchGetIssueCommentsQuery(queryClient, { issueNumber: issue.number });
+    issueAccess.prefetch(queryClient, { issueNumber: issue.number });
+    issueCommentsAccess.prefetch(queryClient, { issueNumber: issue.number });
   }, [queryClient, issue.number]);
 
   const commentCount = issue.comments?.length || 0;

@@ -1,6 +1,6 @@
 import { Label, LabelId } from "../api";
 import { isValid } from "../api_helpers";
-import { useGetLabelsQuery } from "../queries/labels";
+import { labelsAccess } from "../queries/labels";
 import { ErrorIndicator } from "./ErrorIndicator";
 import { LabelChip } from "./Label";
 import { LoadingIndicator } from "./LoadingIndicator";
@@ -12,7 +12,7 @@ type LabelListProps = {
 };
 
 export const LabelList: React.FC<LabelListProps> = (props) => {
-  const labelsQuery = useGetLabelsQuery({}, {});
+  const labelsQuery = labelsAccess.useRpcQuery({}, {});
 
   if (labelsQuery.isLoading) {
     return <LoadingIndicator />;

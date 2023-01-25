@@ -1,8 +1,8 @@
 import React from "react";
 import { relativeDate } from "../helpers/relativeDate";
 import { Comment } from "../api";
-import { useGetUserQuery } from "../queries/user";
 import { LoadingIndicator } from "./LoadingIndicator";
+import { userAccess } from "../queries/user";
 
 const CommentContainer: React.FC<React.PropsWithChildren<{}>> = ({
   children,
@@ -24,7 +24,7 @@ const CommenterLoading: React.FC<{}> = () => (
 
 export const CommentView: React.FC<{ comment: Comment }> = ({ comment }) => {
   const userQuery = !!comment.createdBy
-    ? useGetUserQuery({ userId: comment.createdBy }, {})
+    ? userAccess.useRpcQuery({ userId: comment.createdBy }, {})
     : null;
 
   if (userQuery?.isLoading) return <CommenterLoading />;

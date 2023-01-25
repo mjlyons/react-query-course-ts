@@ -2,20 +2,19 @@ import { useParams } from "react-router-dom";
 import { relativeDate } from "../helpers/relativeDate";
 import { Issue } from "../api";
 import { isStatusClosed } from "../api_helpers";
-import { useGetIssueQuery } from "../queries/issue";
-import { useGetIssueCommentsQuery } from "../queries/issueComments";
-import { useGetUserQuery } from "../queries/user";
 import { CommentView } from "./CommentView";
 import { ErrorIndicator } from "./ErrorIndicator";
 import { IssueStatusIcon } from "./IssueStatusIcon";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { UserName } from "./UserName";
+import { issueAccess } from "../queries/issue";
+import { issueCommentsAccess } from "../queries/issueComments";
 
 export const IssueDetails: React.FC<{ issueNumber: number }> = ({
   issueNumber,
 }) => {
-  const issueQuery = useGetIssueQuery({ issueNumber }, {});
-  const commentsQuery = useGetIssueCommentsQuery({ issueNumber }, {});
+  const issueQuery = issueAccess.useRpcQuery({ issueNumber }, {});
+  const commentsQuery = issueCommentsAccess.useRpcQuery({ issueNumber }, {});
 
   if (issueQuery.isLoading) return <LoadingIndicator />;
   if (issueQuery.isError)
