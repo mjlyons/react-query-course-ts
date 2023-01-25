@@ -22,11 +22,16 @@ export const IssuesList: React.FC<{
   onClickLabel: (labelId: LabelId) => void;
 }> = (props) => {
   const { searchTerm, labelsFilter, statusFilter, onClickLabel } = props;
-
-  // TODO: we should probably use both, but keep track of which one to disable/use
-  const issuesQuery = !!searchTerm
-    ? searchIssuesAccess.useRpcQuery({ searchTerm }, {})
-    : issuesAccess.useRpcQuery({ labelsFilter, statusFilter }, {});
+  const isSearching = !!searchTerm;
+  const searchQuery = searchIssuesAccess.useRpcQuery(
+    { searchTerm: searchTerm ?? "" },
+    { enabled: isSearching }
+  );
+  const listQuery = issuesAccess.useRpcQuery(
+    { labelsFilter, statusFilter },
+    { enabled: !isSearching }
+  );
+  const issuesQuery = isSearching ? searchQuery : listQuery;
 
   if (issuesQuery.isLoading) {
     return <LoadingIndicator />;
