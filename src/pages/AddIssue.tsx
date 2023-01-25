@@ -1,8 +1,8 @@
 import * as React from "react";
-import { useAddIssueMutation } from "../queries/addIssue";
+import { addIssueAccess } from "../queries/addIssue";
 
 export const AddIssue = () => {
-  const addIssueMutation = useAddIssueMutation();
+  const addIssueMutation = addIssueAccess.useRpcMutation();
   const [title, setTitle] = React.useState("");
   const [comment, setComment] = React.useState("");
 

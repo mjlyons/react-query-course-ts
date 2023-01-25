@@ -19,6 +19,12 @@ import {
   ApiQueryOptionsFn,
   ApiQueryFunction,
   ApiQueryArgs,
+  ApiMutationOptions,
+  ApiMutationFunction,
+  ApiMutationOptionsFn,
+  ApiMutationArgs,
+  ApiMutationHookPackage,
+  UseApiMutationHook,
 } from "./api";
 
 export const useApiQuery = <
@@ -114,7 +120,7 @@ export const fetchWithError = async <ResponseT>(
   return result;
 };
 
-const fallbackOptionsFn = <QueryRpcNameT extends QueryRpcName>(
+const fallbackQueryOptionsFn = <QueryRpcNameT extends QueryRpcName>(
   options: ApiQueryOptions<QueryRpcNameT>
 ): ApiQueryOptions<QueryRpcNameT> => options;
 export const createApiQuery = <QueryRpcNameT extends QueryRpcName>({
@@ -129,7 +135,7 @@ export const createApiQuery = <QueryRpcNameT extends QueryRpcName>({
   optionsFn?: ApiQueryOptionsFn<QueryRpcNameT>;
 }): ApiQueryHookPackage<QueryRpcNameT> => {
   const _getQueryKey = getQueryKey ?? getQueryKeyFn(queryRpcName);
-  const _optionsFn = optionsFn ?? fallbackOptionsFn;
+  const _optionsFn = optionsFn ?? fallbackQueryOptionsFn;
 
   const useRpcQuery = (
     args: ApiQueryArgs<QueryRpcNameT>,
@@ -155,5 +161,31 @@ export const createApiQuery = <QueryRpcNameT extends QueryRpcName>({
         !!args ? _getQueryKey(args) : getQueryKeyRpcFilter(queryRpcName)
       );
     },
+  };
+};
+
+const fallbackMutationOptionsFn = <MutationRpcNameT extends MutationRpcName>(
+  options: ApiMutationOptions<MutationRpcNameT>
+): ApiMutationOptions<MutationRpcNameT> => options;
+export const createApiMutation = <MutationRpcNameT extends MutationRpcName>({
+  mutationRpcName,
+  mutationFn,
+  optionsFn,
+}: {
+  mutationRpcName: MutationRpcNameT;
+  mutationFn: ApiMutationFunction<MutationRpcNameT>;
+  optionsFn?: ApiMutationOptionsFn<MutationRpcNameT>;
+}): ApiMutationHookPackage<MutationRpcNameT> => {
+  const _optionsFn = optionsFn ?? fallbackMutationOptionsFn;
+  const useRpcMutation: UseApiMutationHook<MutationRpcNameT> = (
+    options?: ApiMutationOptions<MutationRpcNameT>
+  ) => {
+    const optionsWithDefaults = _optionsFn(options ?? {});
+    return useApiMutation(mutationRpcName, mutationFn, optionsWithDefaults);
+  };
+  return {
+    mutationRpcName,
+    mutationFn,
+    useRpcMutation,
   };
 };

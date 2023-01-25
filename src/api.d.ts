@@ -230,6 +230,11 @@ export type ApiQueryArgs<
   ArgsT extends ApiArgs = QueryRpcNameToTypes[QueryRpcNameT]["args"]
 > = ArgsT;
 
+export type ApiMutationArgs<
+  MutationRpcNameT extends MutationRpcName,
+  ArgsT extends ApiArgs = MutationRpcNameToTypes[MutationRpcNameT]["args"]
+> = ArgsT;
+
 export type ApiQueryResponse<
   QueryRpcNameT extends QueryRpcName,
   ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"]
@@ -253,6 +258,10 @@ export type UseApiQueryHook<
 export type ApiQueryOptionsFn<QueryRpcNameT extends QueryRpcName> = (
   options: ApiQueryOptions<QueryRpcNameT>
 ) => ApiQueryOptions<QueryRpcNameT>;
+
+export type ApiMutationOptionsFn<MutationRpcNameT extends MutationRpcName> = (
+  options: ApiMutationOptions<MutationRpcNameT>
+) => ApiMutationOptions<MutationRpcNameT>;
 
 export type ApiQueryHookPackage<QueryRpcNameT extends QueryRpcName> = {
   queryRpcName: QueryRpcNameT;
@@ -287,4 +296,8 @@ export type UseApiMutationHook<
   options: ApiMutationOptions<MutationRpcNameT> = {}
 ) => ReturnType<typeof useApiMutation<MutationRpcNameT>>;
 
-export type MutationExtensions<MutationRpcNameT extends MutationRpcName> = {};
+export type ApiMutationHookPackage<MutationRpcNameT extends MutationRpcName> = {
+  mutationRpcName: MutationRpcNameT;
+  mutationFn: ApiMutationFunction<MutationRpcNameT>;
+  useRpcMutation: UseApiMutationHook<MutationRpcNameT>;
+};
