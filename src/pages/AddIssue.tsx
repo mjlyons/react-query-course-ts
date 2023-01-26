@@ -1,10 +1,22 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { addIssueAccess } from "../queries/addIssue";
+import { firstIssueAccess } from "../queries/issues";
 
 export const AddIssue = () => {
-  const addIssueMutation = addIssueAccess.useRpcMutation();
+  const navigate = useNavigate();
+  const addIssueMutation = addIssueAccess.useRpcMutation({
+    onSuccess: (data) => {
+      navigate(`/issue/${data.number}`);
+      // navigate(`/`);
+    },
+  });
   const [title, setTitle] = React.useState("");
   const [comment, setComment] = React.useState("");
+  const firstIssueQuery = firstIssueAccess.useRpcQuery({
+    // labelsFilter: [],
+    // statusFilter: null,
+  });
 
   const handleChangeTitle: React.ChangeEventHandler<HTMLInputElement> =
     React.useCallback(
@@ -37,6 +49,9 @@ export const AddIssue = () => {
 
   return (
     <div className="add-issue">
+      <div>
+        Top Issue: {firstIssueQuery.data?.number} {firstIssueQuery.data?.title}
+      </div>
       <h2>Add Issue</h2>
       <form onSubmit={handleSubmit}>
         <label htmlFor="title">Title</label>

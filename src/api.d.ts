@@ -200,16 +200,12 @@ export type ApiMutationFunction<
 
 export type ApiQueryOptions<
   QueryRpcNameT extends QueryRpcName,
+  DataT = ApiQueryResponse<QueryRpcNameT>,
   ArgsT extends ApiArgs = QueryRpcNameToTypes[QueryRpcNameT]["args"],
   ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"],
   ErrorT = QueryRpcNameToTypes[QueryRpcNameT]["error"]
 > = Omit<
-  UseQueryOptions<
-    ResponseT,
-    ErrorT,
-    ResponseT,
-    ApiQueryKey<QueryRpcNameT, ArgsT>
-  >,
+  UseQueryOptions<ResponseT, ErrorT, DataT, ApiQueryKey<QueryRpcNameT, ArgsT>>,
   "queryKey" | "queryFn"
 >;
 
@@ -238,7 +234,17 @@ export type ApiMutationArgs<
 export type ApiQueryResponse<
   QueryRpcNameT extends QueryRpcName,
   ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"]
-> = ArgsT;
+> = ResponseT;
+
+export type ApiQueryError<
+  QueryRpcNameT extends QueryRpcName,
+  ErrorT = QueryRpcNameToTypes[QueryRpcNameT]["error"]
+> = ErrorT;
+
+export type ApiQuerySelectFn<
+  QueryRpcNameT extends QueryRpcName,
+  SelectDataT
+> = (origData: ApiQueryResponse<QueryRpcNameT>) => SelectDataT;
 
 export type GetQueryKeyFn<
   QueryRpcNameT extends QueryRpcName,
@@ -247,27 +253,34 @@ export type GetQueryKeyFn<
 
 export type UseApiQueryHook<
   QueryRpcNameT extends QueryRpcName,
+  DataT = ApiQueryResponse<QueryRpcNameT>,
   ArgsT extends ApiArgs = QueryRpcNameToTypes[QueryRpcNameT]["args"],
   ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"],
   ErrorT = QueryRpcNameToTypes[QueryRpcNameT]["error"]
 > = (
   args: ArgsT,
-  options: ApiQueryOptions<QueryRpcNameT>
-) => ReturnType<typeof useApiQuery<QueryRpcNameT>>;
+  options?: ApiQueryOptions<QueryRpcNameT, DataT>
+) => ReturnType<typeof useApiQuery<QueryRpcNameT, DataT>>;
 
-export type ApiQueryOptionsFn<QueryRpcNameT extends QueryRpcName> = (
-  options: ApiQueryOptions<QueryRpcNameT>
-) => ApiQueryOptions<QueryRpcNameT>;
+export type ApiQueryOptionsFn<
+  QueryRpcNameT extends QueryRpcName,
+  DataT = ApiQueryResponse<QueryRpcNameT>
+> = (
+  options: ApiQueryOptions<QueryRpcNameT, DataT>
+) => ApiQueryOptions<QueryRpcNameT, DataT>;
 
 export type ApiMutationOptionsFn<MutationRpcNameT extends MutationRpcName> = (
   options: ApiMutationOptions<MutationRpcNameT>
 ) => ApiMutationOptions<MutationRpcNameT>;
 
-export type ApiQueryHookPackage<QueryRpcNameT extends QueryRpcName> = {
+export type ApiQueryHookPackage<
+  QueryRpcNameT extends QueryRpcName,
+  DataT = ApiQueryResponse<QueryRpcNameT>
+> = {
   queryRpcName: QueryRpcNameT;
   getQueryKey: GetQueryKeyFn<QueryRpcNameT>;
   queryFn: ApiQueryFunction<QueryRpcNameT>;
-  useRpcQuery: UseApiQueryHook<QueryRpcNameT>;
+  useRpcQuery: UseApiQueryHook<QueryRpcNameT, DataT>;
   prefetch: (
     queryClient: QueryClient,
     args: ApiQueryArgs<QueryRpcNameT>
