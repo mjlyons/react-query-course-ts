@@ -1,10 +1,8 @@
-import { useCallback } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ApiArgs,
   ApiQueryKey,
   GetQueryKeyFn,
-  IssueStatus,
   QueryRpcName,
   QueryRpcNameToTypes,
   MutationRpcName,
@@ -20,6 +18,7 @@ import {
   ApiMutationHookPackage,
   UseApiMutationHook,
   ApiQueryResponse,
+  MutationContext,
 } from "./api";
 
 export const useApiQuery = <
@@ -48,13 +47,18 @@ export const useApiMutation = <
   MutationRpcNameT extends MutationRpcName,
   ArgsT = MutationRpcNameToTypes[MutationRpcNameT]["args"],
   ResponseT = MutationRpcNameToTypes[MutationRpcNameT]["response"],
-  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"]
+  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"],
+  MutationContextT = MutationContext
 >(
   mutationRpcName: MutationRpcNameT,
-  mutationFn: Parameters<typeof useMutation<ResponseT, ErrorT, ArgsT>>[1],
-  options: Parameters<typeof useMutation<ResponseT, ErrorT, ArgsT>>[2] = {}
+  mutationFn: Parameters<
+    typeof useMutation<ResponseT, ErrorT, ArgsT, MutationContextT>
+  >[1],
+  options: Parameters<
+    typeof useMutation<ResponseT, ErrorT, ArgsT, MutationContextT>
+  >[2] = {}
 ): ReturnType<typeof useMutation<ResponseT, ErrorT, ArgsT>> =>
-  useMutation<ResponseT, ErrorT, ArgsT>(
+  useMutation<ResponseT, ErrorT, ArgsT, MutationContextT>(
     getMutationKey(mutationRpcName),
     mutationFn,
     options
@@ -86,19 +90,39 @@ export function isValid<T>(x: T | undefined | null): x is T {
   return x !== undefined && x !== null;
 }
 export const isStatusClosed = (
-  status: IssueStatus | null | undefined
-): boolean => status === "done" || status === "cancelled";
-export const isStatusOpen = (status: IssueStatus | null): boolean =>
-  !isStatusClosed(status);
+  statusId: Status["id"] | null | undefined
+): boolean => statusId === "done" || statusId === "cancelled";
+export const isStatusOpen = (statusId: Status["id"] | null): boolean =>
+  !isStatusClosed(statusId);
 
 export const STATUSES = [
-  "backlog",
-  "todo",
-  "inProgress",
-  "done",
-  "cancelled",
+  { id: "backlog", label: "Backlog" },
+  { id: "todo", label: "To-do" },
+  { id: "inProgress", label: "In Progress" },
+  { id: "done", label: "Done" },
+  { id: "cancelled", label: "Cancelled" },
 ] as const;
-
+export type Status = typeof STATUSES[number];
+export type StatusId = Status["id"];
+const STATUS_MAP = Object.fromEntries(
+  STATUSES.map((status) => [status.id, status])
+);
+const STATUS_IDS = STATUSES.map((status) => status.id);
+export const isStatusId = (
+  maybeStatusId: string
+): maybeStatusId is StatusId => {
+  return (STATUS_IDS as string[]).includes(maybeStatusId);
+};
+export const getStatusById = (statusId: StatusId) => STATUS_MAP[statusId];
+export const getStatusByMaybeId = (
+  maybeStatusId: string | null | undefined,
+  defaultStatus: Status = getStatusById("todo")
+) => {
+  if (!!maybeStatusId && isStatusId(maybeStatusId)) {
+    return getStatusById(maybeStatusId);
+  }
+  return defaultStatus;
+};
 export const fetchWithError = async <ResponseT>(
   ...params: Parameters<typeof fetch>
 ): Promise<ResponseT> => {
@@ -153,6 +177,11 @@ export const createApiQuery = <
     useRpcQuery,
     prefetch: (queryClient, args) => {
       queryClient.prefetchQuery(_getQueryKey(args), queryFn(args));
+    },
+    getQueryData: (queryClient, args) => {
+      return queryClient.getQueryData<ApiQueryResponse<QueryRpcNameT>>(
+        _getQueryKey(args)
+      );
     },
     setQueryData: (queryClient, args, data) => {
       queryClient.setQueryData(_getQueryKey(args), data);

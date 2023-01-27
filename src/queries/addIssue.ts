@@ -4,7 +4,7 @@ import { issueAccess } from "./issue";
 import { issuesAccess } from "./issues";
 
 export const addIssueAccess = createApiMutation({
-  mutationRpcName: "issue",
+  mutationRpcName: "issue/add",
   mutationFn: (issueBody) =>
     fetch("/api/issues", {
       method: "POST",

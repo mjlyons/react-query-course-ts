@@ -1,9 +1,8 @@
 import { GoIssueClosed, GoIssueOpened } from "react-icons/go";
-import { IssueStatus } from "../api";
-import { isStatusClosed } from "../api_helpers";
+import { isStatusClosed, Status } from "../api_helpers";
 
 export const IssueStatusIcon: React.FC<{
-  issueStatus: IssueStatus | null;
+  issueStatus: Status["id"] | null;
   withColor?: boolean;
 }> = ({ issueStatus, withColor }) =>
   isStatusClosed(issueStatus ?? null) ? (

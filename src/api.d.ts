@@ -6,7 +6,7 @@ import {
   UseQueryOptions,
 } from "@tanstack/react-query";
 import { Brand } from "../ts_utils";
-import { STATUSES, useApiQuery } from "./api_helpers";
+import { STATUSES, useApiQuery, useApiMutation } from "./api_helpers";
 
 /**
  * COMMON RPC PRIMATIVES
@@ -18,7 +18,6 @@ export type CommentId = Brand<string, "CommentId">;
 export type IssueId = Brand<string, "IssueId">;
 export type LabelId = Brand<string, "Label">;
 export type IssueNumber = Brand<number, "IssueNumber">;
-export type IssueStatus = typeof STATUSES[number];
 
 export type Label = { id?: LabelId; color?: string; name?: string };
 export type User = { id?: UserId; name?: string; profilePictureUrl?: string };
@@ -32,7 +31,7 @@ export type Issue = {
   id?: IssueId;
   labels?: LabelId[];
   number?: IssueNumber;
-  status?: IssueStatus;
+  status?: Status["id"];
   title?: string;
 };
 export type Comment = {
@@ -50,7 +49,7 @@ export type Comment = {
 export type GetIssuesQueryRpcName = "issues";
 export type GetIssuesArgs = {
   labelsFilter?: LabelId[];
-  statusFilter?: IssueStatus | null;
+  statusFilter?: string | null;
 };
 export type GetIssuesResponse = { items: Issue[] };
 export type GetIssuesError = Error;
@@ -104,6 +103,15 @@ export type AddIssueArgs = {
 export type AddIssueResponse = Issue;
 export type AddIssueError = Error;
 
+// /api/issues/{issueNumber} [MUTATION: update]
+export type UpdateIssueArgs = {
+  /** This is a status.id */
+  status: string;
+  issueNumber: IssueNumber;
+};
+export type UpdateIssueResponse = { status: string };
+export type UpdateIssueError = Error;
+
 /**
  * RPC TYPE LOOKUP
  */
@@ -151,23 +159,20 @@ export type QueryRpcName =
   | "labels"
   | "user";
 
-type AddIssueMutationRpcName = "issue";
-type AddIssueArgs = {
-  title: string;
-  comment: string;
-};
-type AddIssueResponse = Issue;
-type AddIssueError = Error;
-
 export type MutationRpcNameToTypes = {
-  issue: {
+  "issue/add": {
     args: AddIssueArgs;
     response: AddIssueResponse;
     error: AddIssueError;
   };
+  "issue/update": {
+    args: UpdateIssueArgs;
+    response: UpdateIssueResponse;
+    error: UpdateIssueError;
+  };
 };
 
-export type MutationRpcName = "issue";
+export type MutationRpcName = "issue/add" | "issue/update";
 
 /**
  * API GENERIC TYPE HELPERS
@@ -195,7 +200,7 @@ export type ApiQueryFunction<
 export type ApiMutationFunction<
   MutationRpcNameT extends MutationRpcName,
   ArgsT extends ApiArgs = MutationRpcNameToTypes[MutationRpcNameT]["args"],
-  ResponseT = MutationyRpcNameToTypes[MutationRpcNameT]["response"]
+  ResponseT = MutationRpcNameToTypes[MutationRpcNameT]["response"]
 > = MutationFunction<ResponseT, ArgsT>;
 
 export type ApiQueryOptions<
@@ -213,8 +218,12 @@ export type ApiMutationOptions<
   MutationRpcNameT extends MutationRpcName,
   ArgsT extends ApiArgs = MutationRpcNameToTypes[MutationRpcNameT]["args"],
   ResponseT = MutationRpcNameToTypes[MutationRpcNameT]["response"],
-  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"]
-> = Omit<UseMutationOptions<ResponseT, ErrorT, ArgsT>, "mutationFn">;
+  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"],
+  MutationContextT = MutationContext
+> = Omit<
+  UseMutationOptions<ResponseT, ErrorT, ArgsT, MutationContextT>,
+  "mutationFn"
+>;
 
 type ApiQueryKey<
   QueryRpcNameT extends QueryRpcName,
@@ -285,6 +294,10 @@ export type ApiQueryHookPackage<
     queryClient: QueryClient,
     args: ApiQueryArgs<QueryRpcNameT>
   ) => void;
+  getQueryData: (
+    queryClient: QueryClient,
+    args: ApiQueryArgs<QueryRpcNameT>
+  ) => ApiQueryResponse<QueryRpcNameT>;
   setQueryData: (
     queryClient: QueryClient,
     args: ApiQueryArgs<QueryRpcNameT>,
@@ -300,12 +313,7 @@ export type ApiQueryHookPackage<
   ) => void;
 };
 
-export type UseApiMutationHook<
-  MutationRpcNameT extends MutationRpcName,
-  ArgsT extends ApiArgs = MutationRpcNameToTypes[MutationRpcNameT]["args"],
-  ResponseT = MutationRpcNameToTypes[MutationRpcNameT]["response"],
-  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"]
-> = (
+export type UseApiMutationHook<MutationRpcNameT extends MutationRpcName> = (
   options: ApiMutationOptions<MutationRpcNameT> = {}
 ) => ReturnType<typeof useApiMutation<MutationRpcNameT>>;
 
@@ -313,4 +321,8 @@ export type ApiMutationHookPackage<MutationRpcNameT extends MutationRpcName> = {
   mutationRpcName: MutationRpcNameT;
   mutationFn: ApiMutationFunction<MutationRpcNameT>;
   useRpcMutation: UseApiMutationHook<MutationRpcNameT>;
+};
+
+export type MutationContext = {
+  rollback?: () => void;
 };

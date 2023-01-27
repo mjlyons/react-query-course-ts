@@ -4,7 +4,7 @@ import { GoComment } from "react-icons/go";
 import { getIssueRoute } from "../App";
 import { Link } from "react-router-dom";
 import { relativeDate } from "../helpers/relativeDate";
-import { Issue, IssueStatus, LabelId } from "../api";
+import { Issue, LabelId } from "../api";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { LabelList } from "./LabelList";
 import { UserAvatar } from "./UserAvatar";
@@ -14,11 +14,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { searchIssuesAccess } from "../queries/searchIssues";
 import { issueAccess } from "../queries/issue";
 import { issueCommentsAccess } from "../queries/issueComments";
+import { Status } from "../api_helpers";
 
 export const IssuesList: React.FC<{
   searchTerm?: string | null;
   labelsFilter?: LabelId[];
-  statusFilter?: IssueStatus | null;
+  statusFilter?: Status | null;
   onClickLabel: (labelId: LabelId) => void;
 }> = (props) => {
   const { searchTerm, labelsFilter, statusFilter, onClickLabel } = props;
@@ -28,7 +29,7 @@ export const IssuesList: React.FC<{
     { enabled: isSearching }
   );
   const listQuery = issuesAccess.useRpcQuery(
-    { labelsFilter, statusFilter },
+    { labelsFilter, statusFilter: statusFilter?.id },
     { enabled: !isSearching }
   );
   const issuesQuery = isSearching ? searchQuery : listQuery;

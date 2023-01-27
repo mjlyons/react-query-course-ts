@@ -1,7 +1,13 @@
 import { useParams } from "react-router-dom";
 import { relativeDate } from "../helpers/relativeDate";
 import { Issue } from "../api";
-import { isStatusClosed } from "../api_helpers";
+import {
+  getStatusById,
+  getStatusByMaybeId,
+  isStatusClosed,
+  isStatusId,
+  isStatusOpen,
+} from "../api_helpers";
 import { CommentView } from "./CommentView";
 import { ErrorIndicator } from "./ErrorIndicator";
 import { IssueStatusIcon } from "./IssueStatusIcon";
@@ -9,6 +15,7 @@ import { LoadingIndicator } from "./LoadingIndicator";
 import { UserName } from "./UserName";
 import { issueAccess } from "../queries/issue";
 import { issueCommentsAccess } from "../queries/issueComments";
+import { IssueStatus } from "./issueStatus";
 
 export const IssueDetails: React.FC<{ issueNumber: number }> = ({
   issueNumber,
@@ -32,6 +39,12 @@ export const IssueDetails: React.FC<{ issueNumber: number }> = ({
             <CommentView key={comment.id} comment={comment} />
           ))}
         </section>
+        <aside>
+          <IssueStatus
+            status={getStatusByMaybeId(issueQuery.data.status)}
+            issueNumber={issueQuery.data.number}
+          />
+        </aside>
       </main>
     </div>
   );
@@ -43,7 +56,15 @@ const IssueHeader: React.FC<{ issue: Issue }> = ({ issue }) => {
       <h2>
         {issue.title} <span>#{issue.number}</span>
         <div>
-          <span className={isStatusClosed(issue.status) ? "closed" : "open"}>
+          <span
+            className={
+              !issue.status ||
+              !isStatusId(issue.status) ||
+              isStatusOpen(issue.status)
+                ? "open"
+                : "closed"
+            }
+          >
             <IssueStatusIcon issueStatus={issue.status ?? null} />
             {issue.status}
           </span>

@@ -1,29 +1,31 @@
 import React from "react";
 
 import { FormEventHandler } from "react";
-import { IssueStatus } from "../api";
-import { STATUSES } from "../api_helpers";
+import { getStatusById, isStatusId, Status, STATUSES } from "../api_helpers";
 
 export const StatusSelect: React.FC<{
-  onChangeStatus: (updatedStatus: IssueStatus | null) => void;
-}> = (props) => {
-  const { onChangeStatus } = props;
+  onChangeStatus: (updatedStatus: Status | null) => void;
+  value: Status | null;
+  noEmptyOption?: boolean;
+}> = ({ onChangeStatus, value, noEmptyOption = false }) => {
   const handleChange = React.useCallback<FormEventHandler<HTMLSelectElement>>(
     (event) => {
       const option = event.currentTarget.value;
-      onChangeStatus(option === "any" ? null : (option as IssueStatus));
+      onChangeStatus(isStatusId(option) ? getStatusById(option) : null);
     },
     [onChangeStatus]
   );
 
   return (
-    <select className="status-select" onChange={handleChange}>
-      <option key="any" value="any">
-        Any
-      </option>
+    <select
+      className="status-select"
+      value={value?.id ?? ""}
+      onChange={handleChange}
+    >
+      {!noEmptyOption && <option value="">Select a status to filter</option>}
       {STATUSES.map((status) => (
-        <option key={status} value={status}>
-          {status}
+        <option key={status.id} value={status.id}>
+          {status.label}
         </option>
       ))}
     </select>
