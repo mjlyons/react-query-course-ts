@@ -16,12 +16,14 @@ import { UserName } from "./UserName";
 import { issueAccess } from "../queries/issue";
 import { issueCommentsAccess } from "../queries/issueComments";
 import { IssueStatus } from "./issueStatus";
+import { IssueAssignment } from "./IssueAssignment";
+import { IssueLabels } from "./IssueLabes";
 
 export const IssueDetails: React.FC<{ issueNumber: number }> = ({
   issueNumber,
 }) => {
-  const issueQuery = issueAccess.useRpcQuery({ issueNumber }, {});
-  const commentsQuery = issueCommentsAccess.useRpcQuery({ issueNumber }, {});
+  const issueQuery = issueAccess.useRpcQuery({ issueNumber });
+  const commentsQuery = issueCommentsAccess.useRpcQuery({ issueNumber });
 
   if (issueQuery.isLoading) return <LoadingIndicator />;
   if (issueQuery.isError)
@@ -42,6 +44,14 @@ export const IssueDetails: React.FC<{ issueNumber: number }> = ({
         <aside>
           <IssueStatus
             status={getStatusByMaybeId(issueQuery.data.status)}
+            issueNumber={issueQuery.data.number}
+          />
+          <IssueAssignment
+            assignee={issueQuery.data.assignee ?? null}
+            issueNumber={issueQuery.data.number}
+          />
+          <IssueLabels
+            issueLabelIds={issueQuery.data.labels ?? []}
             issueNumber={issueQuery.data.number}
           />
         </aside>
@@ -69,7 +79,7 @@ const IssueHeader: React.FC<{ issue: Issue }> = ({ issue }) => {
             {issue.status}
           </span>
           <span className="created-by">
-            <UserName userId={issue.createdBy} />
+            {!!issue.createdBy && <UserName userId={issue.createdBy} />}
           </span>{" "}
           opened this issue {relativeDate(issue.createdDate)} -{" "}
           {(issue.comments ?? []).length} comments

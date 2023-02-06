@@ -13,10 +13,10 @@ import { STATUSES, useApiQuery, useApiMutation } from "./api_helpers";
  */
 export type DateString = Brand<string, "DateString">;
 
-export type UserId = Brand<string, "UserId">;
+export type UserId = string;
 export type CommentId = Brand<string, "CommentId">;
 export type IssueId = Brand<string, "IssueId">;
-export type LabelId = Brand<string, "Label">;
+export type LabelId = string;
 export type IssueNumber = Brand<number, "IssueNumber">;
 
 export type Label = { id?: LabelId; color?: string; name?: string };
@@ -93,6 +93,12 @@ export type GetUserArgs = { userId: string };
 export type GetUserResponse = User | undefined;
 export type GetUserError = Error;
 
+// /api/users
+export type GetUsersQueryRpcName = "users";
+export type GetUsersArgs = {};
+export type GetUsersResponse = User[];
+export type GetUsersError = Error;
+
 // --- MUTATIONS ---
 
 // /api/issues [MUTATION: add]
@@ -105,11 +111,16 @@ export type AddIssueError = Error;
 
 // /api/issues/{issueNumber} [MUTATION: update]
 export type UpdateIssueArgs = {
-  /** This is a status.id */
-  status: string;
   issueNumber: IssueNumber;
+  /** This is a status.id */
+  status?: string;
+  assignee?: UserId | null;
+  labels?: LabelId[];
 };
-export type UpdateIssueResponse = { status: string };
+export type UpdateIssueResponse = {
+  status: string;
+  assignee: UserId | null;
+};
 export type UpdateIssueError = Error;
 
 /**
@@ -147,17 +158,13 @@ type QueryRpcNameToTypes = {
     response: GetUserResponse;
     error: GetUserError;
   };
+  users: {
+    args: GetUsersArgs;
+    response: GetUsersResponse;
+    error: GetUsersError;
+  };
 };
-
-/* I wonder why I can't do `keyof QueryRpcNameToTypes` */
-// export type QueryRpcName = keyof QueryRpcNameToTypes;
-export type QueryRpcName =
-  | "issues"
-  | "search/issues"
-  | "issue"
-  | "issue/comments"
-  | "labels"
-  | "user";
+export type QueryRpcName = keyof QueryRpcNameToTypes;
 
 export type MutationRpcNameToTypes = {
   "issue/add": {
@@ -171,8 +178,7 @@ export type MutationRpcNameToTypes = {
     error: UpdateIssueError;
   };
 };
-
-export type MutationRpcName = "issue/add" | "issue/update";
+export type MutationRpcName = keyof MutationRpcNameToTypes;
 
 /**
  * API GENERIC TYPE HELPERS
@@ -218,10 +224,9 @@ export type ApiMutationOptions<
   MutationRpcNameT extends MutationRpcName,
   ArgsT extends ApiArgs = MutationRpcNameToTypes[MutationRpcNameT]["args"],
   ResponseT = MutationRpcNameToTypes[MutationRpcNameT]["response"],
-  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"],
-  MutationContextT = MutationContext
+  ErrorT = MutationRpcNameToTypes[MutationRpcNameT]["error"]
 > = Omit<
-  UseMutationOptions<ResponseT, ErrorT, ArgsT, MutationContextT>,
+  UseMutationOptions<ResponseT, ErrorT, ArgsT, MutationContext>,
   "mutationFn"
 >;
 

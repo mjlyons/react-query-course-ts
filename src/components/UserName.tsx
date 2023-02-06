@@ -2,7 +2,7 @@ import { UserId } from "../api";
 import { userAccess } from "../queries/user";
 import { ErrorIndicator } from "./ErrorIndicator";
 
-export const UserName: React.FC<{ userId: UserId }> = ({ userId }) => {
+export const UserName: React.FC<{ userId: string }> = ({ userId }) => {
   const userQuery = userAccess.useRpcQuery({ userId }, {});
 
   if (userQuery.isLoading) return <>{userId}</>;
