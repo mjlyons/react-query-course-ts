@@ -30,6 +30,9 @@ export const issuesAccess = createApiQuery({
       if (!!args.statusFilter) {
         url.searchParams.append("status", args.statusFilter);
       }
+      if (args.pageNum !== undefined) {
+        url.searchParams.append("page", args.pageNum.toString());
+      }
 
       return fetchWithError<GetIssuesResponse["items"]>(url.toString(), {
         // headers: { "x-error": "1" },

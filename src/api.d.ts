@@ -50,6 +50,7 @@ export type GetIssuesQueryRpcName = "issues";
 export type GetIssuesArgs = {
   labelsFilter?: LabelId[];
   statusFilter?: string | null;
+  pageNum?: number;
 };
 export type GetIssuesResponse = { items: Issue[] };
 export type GetIssuesError = Error;

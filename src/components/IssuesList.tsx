@@ -21,6 +21,8 @@ export const IssuesList: React.FC<{
   labelsFilter?: LabelId[];
   statusFilter?: Status | null;
   onClickLabel: (labelId: LabelId) => void;
+  pageNum: number;
+  setPageNum: (updatedPageNum: number) => void;
 }> = (props) => {
   const { searchTerm, labelsFilter, statusFilter, onClickLabel } = props;
   const isSearching = !!searchTerm;
@@ -29,8 +31,12 @@ export const IssuesList: React.FC<{
     { enabled: isSearching }
   );
   const listQuery = issuesAccess.useRpcQuery(
-    { labelsFilter, statusFilter: statusFilter?.id },
-    { enabled: !isSearching }
+    {
+      labelsFilter,
+      statusFilter: statusFilter?.id,
+      pageNum: props.pageNum ?? 1,
+    },
+    { enabled: !isSearching, keepPreviousData: true }
   );
   const issuesQuery = isSearching ? searchQuery : listQuery;
 
@@ -52,6 +58,36 @@ export const IssuesList: React.FC<{
           <IssueItem key={issue.id} issue={issue} onClickLabel={onClickLabel} />
         </ul>
       ))}
+      {!isSearching && (
+        <div className="pagination">
+          <button
+            disabled={props.pageNum <= 1}
+            onClick={() => {
+              props.setPageNum(Math.max(0, props.pageNum - 1));
+            }}
+          >
+            Previous
+          </button>
+          <p>
+            Page {props.pageNum} {issuesQuery.isFetching && "..."}
+          </p>
+          <button
+            disabled={
+              issuesQuery.data.items.length <= 0 || issuesQuery.isPreviousData
+            }
+            onClick={() => {
+              if (
+                issuesQuery.data.items.length > 0 &&
+                !issuesQuery.isPreviousData
+              ) {
+                props.setPageNum(props.pageNum + 1);
+              }
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </>
   );
 };
@@ -85,7 +121,11 @@ const IssueItem: React.FC<{
         </span>
         <small>
           #{issue.number} opened {relativeDate(issue.createdDate)} by{" "}
-          <UserName userId={issue.createdBy} />
+          {!!issue.createdBy && (
+            <>
+              by <UserName userId={issue.createdBy} />
+            </>
+          )}
         </small>
         <div>Status: {issue.status}</div>
       </div>
