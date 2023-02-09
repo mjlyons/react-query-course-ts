@@ -1,29 +1,32 @@
 import { useParams } from "react-router-dom";
 import { relativeDate } from "../helpers/relativeDate";
 import { Issue } from "../api";
-import {
-  getStatusById,
-  getStatusByMaybeId,
-  isStatusClosed,
-  isStatusId,
-  isStatusOpen,
-} from "../api_helpers";
+import { getStatusByMaybeId, isStatusId, isStatusOpen } from "../api_helpers";
 import { CommentView } from "./CommentView";
 import { ErrorIndicator } from "./ErrorIndicator";
 import { IssueStatusIcon } from "./IssueStatusIcon";
 import { LoadingIndicator } from "./LoadingIndicator";
 import { UserName } from "./UserName";
 import { issueAccess } from "../queries/issue";
-import { issueCommentsAccess } from "../queries/issueComments";
+import { issueCommentsInfAccess } from "../queries/issueComments";
 import { IssueStatus } from "./issueStatus";
 import { IssueAssignment } from "./IssueAssignment";
 import { IssueLabels } from "./IssueLabes";
+import { useScrollToBottomAction } from "../helpers/useScrollToBottomAction";
 
 export const IssueDetails: React.FC<{ issueNumber: number }> = ({
   issueNumber,
 }) => {
   const issueQuery = issueAccess.useRpcQuery({ issueNumber });
-  const commentsQuery = issueCommentsAccess.useRpcQuery({ issueNumber });
+  const commentsQuery = issueCommentsInfAccess.useRpcInfiniteQuery({
+    issueNumber,
+  });
+
+  useScrollToBottomAction(
+    { document },
+    commentsQuery.fetchNextPage,
+    50 /* offset px */
+  );
 
   if (issueQuery.isLoading) return <LoadingIndicator />;
   if (issueQuery.isError)
@@ -36,10 +39,17 @@ export const IssueDetails: React.FC<{ issueNumber: number }> = ({
       <h1>Issue {issueNumber}</h1>
       <IssueHeader issue={issueQuery.data} />
       <main>
-        <section>
-          {commentsQuery.data?.map((comment) => (
-            <CommentView key={comment.id} comment={comment} />
-          ))}
+        <section
+          onScroll={(event) => {
+            console.log(event);
+          }}
+        >
+          {commentsQuery.data?.pages.map((page) =>
+            page.map((comment) => (
+              <CommentView key={comment.id} comment={comment} />
+            ))
+          )}
+          {commentsQuery.isFetchingNextPage && <LoadingIndicator />}
         </section>
         <aside>
           <IssueStatus

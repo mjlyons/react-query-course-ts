@@ -1,11 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { GetIssuesResponse, Issue, UseApiQueryHook } from "../api";
-import {
-  createApiQuery,
-  fetchWithError,
-  getQueryKeyFn,
-  reoptionApiQuery,
-} from "../api_helpers";
+import { createApiQuery, fetchWithError, getQueryKeyFn } from "../api_helpers";
 import { issueAccess } from "./issue";
 
 export const issuesAccess = createApiQuery({
@@ -16,7 +11,7 @@ export const issuesAccess = createApiQuery({
       labelsFilter: _args.labelsFilter ?? [],
       statusFilter: _args.statusFilter ?? null,
     };
-    return getQueryKeyFn("issues")(args);
+    return getQueryKeyFn("issues", "query")(args);
   },
   queryFn:
     (args) =>
@@ -58,15 +53,3 @@ export const issuesAccess = createApiQuery({
     };
   },
 });
-
-/**
- * Example of how to use a selector. Not sure this is a good idea b/c of the
- * manual cache normalization/invalidation will get skipped above.
- */
-export const firstIssueAccess = reoptionApiQuery<
-  Issue,
-  typeof issuesAccess.queryRpcName
->(issuesAccess, (options) => ({
-  ...options,
-  select: (data) => data.items[0] ?? null,
-}));

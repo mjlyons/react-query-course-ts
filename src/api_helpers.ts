@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   ApiArgs,
   ApiQueryKey,
@@ -19,29 +19,79 @@ import {
   UseApiMutationHook,
   ApiQueryResponse,
   MutationContext,
+  ApiQueryError,
+  ApiInfiniteQueryOptions,
+  ApiInfiniteQueryOptionsFn,
+  ApiInfiniteQueryHookPackage,
+  CommonQueryHookPackageFunctions,
+  QueryKeyModifier,
 } from "./api";
 
-export const useApiQuery = <
-  QueryRpcNameT extends QueryRpcName,
-  DataT = ApiQueryResponse<QueryRpcNameT>,
-  ResponseT = QueryRpcNameToTypes[QueryRpcNameT]["response"],
-  ErrorT = QueryRpcNameToTypes[QueryRpcNameT]["error"]
->(
-  queryKey: ApiQueryKey<QueryRpcNameT>,
+export const useApiQuery = <QueryRpcNameT extends QueryRpcName>(
+  queryKey: ApiQueryKey<QueryRpcNameT, "query">,
   queryFn: Parameters<
-    typeof useQuery<ResponseT, ErrorT, ResponseT, ApiQueryKey<QueryRpcNameT>>
+    typeof useQuery<
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryError<QueryRpcNameT>,
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryKey<QueryRpcNameT, "query">
+    >
   >[1],
   options: Parameters<
-    typeof useQuery<ResponseT, ErrorT, DataT, ApiQueryKey<QueryRpcNameT>>
+    typeof useQuery<
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryError<QueryRpcNameT>,
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryKey<QueryRpcNameT, "query">
+    >
   >[2]
 ): ReturnType<
-  typeof useQuery<ResponseT, ErrorT, DataT, ApiQueryKey<QueryRpcNameT>>
+  typeof useQuery<
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryError<QueryRpcNameT>,
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryKey<QueryRpcNameT, "query">
+  >
 > =>
-  useQuery<ResponseT, ErrorT, DataT, ApiQueryKey<QueryRpcNameT>>(
-    queryKey,
-    queryFn,
-    options
-  );
+  useQuery<
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryError<QueryRpcNameT>,
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryKey<QueryRpcNameT, "query">
+  >(queryKey, queryFn, options);
+
+export const useApiInfiniteQuery = <QueryRpcNameT extends QueryRpcName>(
+  queryKey: ApiQueryKey<QueryRpcNameT, "infquery">,
+  queryFn: Parameters<
+    typeof useInfiniteQuery<
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryError<QueryRpcNameT>,
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryKey<QueryRpcNameT, "infquery">
+    >
+  >[1],
+  options: Parameters<
+    typeof useInfiniteQuery<
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryError<QueryRpcNameT>,
+      ApiQueryResponse<QueryRpcNameT>,
+      ApiQueryKey<QueryRpcNameT, "infquery">
+    >
+  >[2]
+): ReturnType<
+  typeof useInfiniteQuery<
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryError<QueryRpcNameT>,
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryKey<QueryRpcNameT, "infquery">
+  >
+> =>
+  useInfiniteQuery<
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryError<QueryRpcNameT>,
+    ApiQueryResponse<QueryRpcNameT>,
+    ApiQueryKey<QueryRpcNameT, "infquery">
+  >(queryKey, queryFn, options);
 
 export const useApiMutation = <
   MutationRpcNameT extends MutationRpcName,
@@ -66,12 +116,15 @@ export const useApiMutation = <
 export const getQueryKeyFn =
   <
     QueryRpcNameT extends QueryRpcName,
-    ArgsT extends ApiArgs = QueryRpcNameToTypes[QueryRpcNameT]["args"]
+    QueryKeyModifierT extends QueryKeyModifier
   >(
-    queryRpcName: QueryRpcNameT
-  ): ((args: ArgsT) => [QueryRpcNameT, ArgsT]) =>
-  (args: ArgsT) => {
-    return [queryRpcName, args];
+    queryRpcName: QueryRpcNameT,
+    queryKeyModifier: QueryKeyModifierT
+  ): ((
+    args: ApiQueryArgs<QueryRpcNameT>
+  ) => ApiQueryKey<QueryRpcNameT, QueryKeyModifierT>) =>
+  (args: ApiQueryArgs<QueryRpcNameT>) => {
+    return [queryRpcName, args, queryKeyModifier];
   };
 
 export const getQueryKeyRpcFilter = <QueryRpcNameT extends QueryRpcName>(
@@ -141,29 +194,61 @@ export const fetchWithError = async <ResponseT>(
 };
 
 const identity = <T>(x: T): T => x;
-export const createApiQuery = <
+
+const createCommonQueryHookPackageFunctions = <
   QueryRpcNameT extends QueryRpcName,
-  DataT = ApiQueryResponse<QueryRpcNameT>
->({
+  QueryKeyModifierT extends QueryKeyModifier
+>(
+  queryRpcName: QueryRpcNameT,
+  getQueryKeyFn: GetQueryKeyFn<QueryRpcNameT, QueryKeyModifierT>,
+  queryFn: ApiQueryFunction<QueryRpcNameT, QueryKeyModifierT>
+): CommonQueryHookPackageFunctions<QueryRpcNameT> => {
+  return {
+    getQueryData: (queryClient, args) => {
+      return queryClient.getQueryData<ApiQueryResponse<QueryRpcNameT>>(
+        getQueryKeyFn(args)
+      );
+    },
+    setQueryData: (queryClient, args, data) => {
+      queryClient.setQueryData(getQueryKeyFn(args), data);
+    },
+    invalidateQueries: (queryClient, args) => {
+      queryClient.invalidateQueries(
+        !!args ? getQueryKeyFn(args) : getQueryKeyRpcFilter(queryRpcName)
+      );
+    },
+  };
+};
+
+type CreateApiQueryArgs<QueryRpcNameT extends QueryRpcName> = {
+  queryRpcName: QueryRpcNameT;
+  queryFn: ApiQueryFunction<QueryRpcNameT, "query">;
+  getQueryKey?: GetQueryKeyFn<QueryRpcNameT, "query">;
+  optionsFn?: ApiQueryOptionsFn<QueryRpcNameT>;
+};
+
+type CreateApiInfiniteQueryArgs<QueryRpcNameT extends QueryRpcName> = {
+  queryRpcName: QueryRpcNameT;
+  queryFn: ApiQueryFunction<QueryRpcNameT, "infquery">;
+  getQueryKey?: GetQueryKeyFn<QueryRpcNameT, "infquery">;
+  optionsFn: ApiInfiniteQueryOptionsFn<QueryRpcNameT>;
+};
+
+export const createApiQuery = <QueryRpcNameT extends QueryRpcName>({
   queryRpcName,
   queryFn,
   getQueryKey,
   optionsFn,
-}: {
-  queryRpcName: QueryRpcNameT;
-  queryFn: ApiQueryFunction<QueryRpcNameT>;
-  getQueryKey?: GetQueryKeyFn<QueryRpcNameT>;
-  optionsFn?: ApiQueryOptionsFn<QueryRpcNameT, DataT>;
-}): ApiQueryHookPackage<QueryRpcNameT, /*SelectsT ,*/ DataT> => {
-  const _getQueryKey = getQueryKey ?? getQueryKeyFn(queryRpcName);
+}: CreateApiQueryArgs<QueryRpcNameT>): ApiQueryHookPackage<QueryRpcNameT> => {
+  const _getQueryKey = getQueryKey ?? getQueryKeyFn(queryRpcName, "query");
   const _optionsFn = optionsFn ?? identity;
 
   const useRpcQuery = (
     args: ApiQueryArgs<QueryRpcNameT>,
-    options?: ApiQueryOptions<QueryRpcNameT, DataT>
+    options?: ApiQueryOptions<QueryRpcNameT>
   ) => {
     const optionsWithDefaults = _optionsFn(options ?? {});
-    return useApiQuery<QueryRpcNameT, DataT>(
+    return useApiQuery<QueryRpcNameT>(
       _getQueryKey(args),
       queryFn(args),
       optionsWithDefaults
@@ -178,19 +263,48 @@ export const createApiQuery = <
     prefetch: (queryClient, args) => {
       queryClient.prefetchQuery(_getQueryKey(args), queryFn(args));
     },
-    getQueryData: (queryClient, args) => {
-      return queryClient.getQueryData<ApiQueryResponse<QueryRpcNameT>>(
-        _getQueryKey(args)
-      );
+    ...createCommonQueryHookPackageFunctions(
+      queryRpcName,
+      _getQueryKey,
+      queryFn
+    ),
+  };
+};
+
+export const createApiInfiniteQuery = <QueryRpcNameT extends QueryRpcName>({
+  queryRpcName,
+  queryFn,
+  getQueryKey,
+  optionsFn,
+}: CreateApiInfiniteQueryArgs<QueryRpcNameT>): ApiInfiniteQueryHookPackage<QueryRpcNameT> => {
+  const _getQueryKey = getQueryKey ?? getQueryKeyFn(queryRpcName, "infquery");
+  const _optionsFn = optionsFn ?? identity;
+
+  const useRpcInfiniteQuery = (
+    args: ApiQueryArgs<QueryRpcNameT>,
+    options?: ApiInfiniteQueryOptions<QueryRpcNameT>
+  ) => {
+    const optionsWithDefaults = _optionsFn(options ?? {});
+    return useInfiniteQuery(
+      _getQueryKey(args),
+      queryFn(args),
+      optionsWithDefaults
+    );
+  };
+
+  return {
+    queryRpcName,
+    getQueryKey: _getQueryKey,
+    queryFn,
+    useRpcInfiniteQuery,
+    prefetchInfinite: (queryClient, args) => {
+      queryClient.prefetchInfiniteQuery(_getQueryKey(args), queryFn(args));
     },
-    setQueryData: (queryClient, args, data) => {
-      queryClient.setQueryData(_getQueryKey(args), data);
-    },
-    invalidateQueries: (queryClient, args) => {
-      queryClient.invalidateQueries(
-        !!args ? _getQueryKey(args) : getQueryKeyRpcFilter(queryRpcName)
-      );
-    },
+    ...createCommonQueryHookPackageFunctions(
+      queryRpcName,
+      _getQueryKey,
+      queryFn
+    ),
   };
 };
 
@@ -215,17 +329,4 @@ export const createApiMutation = <MutationRpcNameT extends MutationRpcName>({
     mutationFn,
     useRpcMutation,
   };
-};
-
-export const reoptionApiQuery = <DataT, QueryRpcNameT extends QueryRpcName>(
-  srcHookPackage: ApiQueryHookPackage<QueryRpcNameT>,
-  optionsFn: ApiQueryOptionsFn<QueryRpcNameT, DataT>
-): ApiQueryHookPackage<QueryRpcNameT, DataT> => {
-  const { queryRpcName, queryFn, getQueryKey } = srcHookPackage;
-  return createApiQuery({
-    queryRpcName,
-    getQueryKey,
-    queryFn,
-    optionsFn,
-  });
 };

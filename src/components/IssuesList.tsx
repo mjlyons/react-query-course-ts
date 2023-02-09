@@ -13,7 +13,7 @@ import { IssueStatusIcon } from "./IssueStatusIcon";
 import { useQueryClient } from "@tanstack/react-query";
 import { searchIssuesAccess } from "../queries/searchIssues";
 import { issueAccess } from "../queries/issue";
-import { issueCommentsAccess } from "../queries/issueComments";
+import { issueCommentsInfAccess } from "../queries/issueComments";
 import { Status } from "../api_helpers";
 
 export const IssuesList: React.FC<{
@@ -101,7 +101,9 @@ const IssueItem: React.FC<{
 
   const handleMouseEnter = React.useCallback(() => {
     issueAccess.prefetch(queryClient, { issueNumber: issue.number });
-    issueCommentsAccess.prefetch(queryClient, { issueNumber: issue.number });
+    issueCommentsInfAccess.prefetchInfinite(queryClient, {
+      issueNumber: issue.number,
+    });
   }, [queryClient, issue.number]);
 
   const commentCount = issue.comments?.length || 0;

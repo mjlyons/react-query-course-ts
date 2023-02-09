@@ -10,10 +10,11 @@ export const LabelChip: React.FC<{
 }> = (props) => {
   const { label, isSelected, onClickLabel } = props;
 
-  const handleClick = React.useCallback(
-    () => onClickLabel?.(label.id),
-    [onClickLabel]
-  );
+  const handleClick = React.useCallback(() => {
+    if (!!label.id) {
+      onClickLabel?.(label.id);
+    }
+  }, [onClickLabel]);
 
   return (
     <button

@@ -42,7 +42,7 @@ const Labels: React.FC<{ allLabels: Label[] } & LabelListProps> = (props) => {
       {labels.map((label) => (
         <LabelChip
           key={label.id}
-          isSelected={(selectedLabelIds ?? []).includes(label.id)}
+          isSelected={!!label.id && (selectedLabelIds ?? []).includes(label.id)}
           label={label}
           onClickLabel={onClickLabel}
         />
